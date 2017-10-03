@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<title></title>
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.css" />
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/4.1.1/d3.min.js"></script>    
+<script src="//cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+
+<style>
+	html, body { padding: 0px; margin: 0px; }   
+	html, body, #greatMap { width: 100%; height: 100%; }
+	.nuts { stroke : #ffffff ; stroke-width: 0.9px; stroke-linecap: round ; fill: #E89ACA; fill-opacity: 0.4}
+	path:hover { fill: brown; fill-opacity: .7;}
+
+	#info {   
+		z-index: 10;
+	 	position: absolute;           
+		text-align: center;           
+		height: 28px;                 
+		padding: 2px;             
+		font: 12px sans-serif;        
+ 		background: rgba(255, 255, 255, 0.7);
+		border: 0px;      
+		border-radius: 8px;           
+		pointer-events: none;  
+		left: 0px;
+		top:0px;       
+	}
+
+	#greatMap {   
+		z-index: 1;
+    
+	}
+
+	#logo { 
+		z-index:100;	 	
+		position: absolute;    
+		right: 10px;
+		bottom:20px;
+	}
+
+	#title { 
+		z-index:100;	 	
+		position: absolute;    
+		left: 55px;
+		top:-15px;
+		font-family:Impact;
+		color:  white;
+   		text-shadow: 2px 2px 4px #153760;
+	}
+
+	#menu {   
+		z-index: 2;
+	 	position: absolute;    
+		right: 10px;
+		top:10px;
+		text-align: center;           
+		height: 250px;
+		width: 150px;                 
+		padding: 2px;             
+		font: 12px sans-serif;  
+		border-radius:0px 0px 0px 12px;    
+		border-bottom: 0px solid #CCCCCC;
+		border-left: 0px solid #CCCCCC;
+		background: rgba(255, 255, 255, 0.3);
+	}
+
+	.menu-item {   
+		width: 146px;                 
+		height:25px;		
+		background: #70A9DB;
+		border-radius:5px;    
+		margin:2px;
+		cursor:pointer;
+		color:white;
+		font-weight: bold;
+ 		line-height: 25px;
+		
+	}
+
+</style>
+
+</head>
+
+<body>
+<div id="greatMap"></div>  
+<div id="menu"></div>  
+<script>
+    
+// Files to load    
+    queue()
+    .defer(d3.json, "database/geojson/nuts2006-level0.geojson")
+    .defer(d3.json, "database/geojson/nuts2006-level1.geojson")
+    .defer(d3.json, "database/geojson/nuts2006-level2.geojson")
+    .defer(d3.json, "database/geojson/nuts2006-level3.geojson")
+    .defer(d3.json, "database/geojson/nuts2010-level0.geojson")
+    .defer(d3.json, "database/geojson/nuts2010-level1.geojson")
+    .defer(d3.json, "database/geojson/nuts2010-level2.geojson")
+    .defer(d3.json, "database/geojson/nuts2010-level3.geojson")
+    .defer(d3.json, "database/geojson/nuts2013-level0.geojson")
+    .defer(d3.json, "database/geojson/nuts2013-level1.geojson")
+    .defer(d3.json, "database/geojson/nuts2013-level2.geojson")
+    .defer(d3.json, "database/geojson/nuts2013-level3.geojson")
+    .await(loadGeom);
+
+function loadGeom(error, n02006, n12006, n22006, n32006, n02010, n12010, n22010, n32010, n02013, n12013, n22013, n32013) {
+  if (error) throw error;
+
+
+// Define a basemap and min/max Zoom
+var basemap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}', { 
+	attribution: 'Nicolas LAMBERT, 2017',
+	maxZoom: 7, minZoom: 3
+});
+
+
+
+
+map = L.map('greatMap').setView([52　, 10], 5);
+//var map = L.map('greatMap', {zoomControl: true}).fitBounds(L.geoJson(n02006).getBounds());
+
+basemap.addTo(map);
+L.svg().addTo(map);
+var svg = d3.select("#greatMap").select("svg");	
+var info = d3.select("#info")
+
+
+//g = svg.append("g").attr("class", "leaflet-zoom-hide");Elsa Nitram
+
+function projectPoint(x, y) {
+                var point = map.latLngToLayerPoint(new L.LatLng(y, x));
+                this.stream.point(point.x, point.y);
+            }
+
+var transform = d3.geoTransform({point: projectPoint}),
+path = d3.geoPath().projection(transform);
+
+
+
+
+function draw(layer) { 
+
+       var featureElement = svg
+	    .append("g")
+	    .attr("id","mylayer")
+            .attr("class","nuts")
+	    .selectAll("path")
+	    .data(layer.features)
+            .enter()
+            .append("path")
+	    .attr('style', 'pointer-events:visiblePainted;  cursor:pointer') 
+       	    .attr("id", function(d) { return d.id; })
+ 	.on('click',  function (d) {console.log(d.properties.name);})
+.on("mouseover", function(d) {		
+            info.transition()		
+                .duration(200)		
+                .style("opacity", 0.8);		
+            info.html("<b>"+d.properties.id + "</b><br/>"  + d.properties.name)	
+                .style("left", (d3.event.pageX - d.properties.name.length*7/2)  +"px")		
+                .style("top", (d3.event.pageY - 70) + "px")
+	    	.style("width", (d.properties.name.length*7) + "px");
+            })					
+        .on("mouseout", function(d) {		
+            info.transition()		
+                .duration(500)		
+                .style("opacity", 0);	
+        });
+    
+        map.on("move", update);
+    
+        update();
+
+        function update() {featureElement.attr("d", path);} 
+
+// Tooltip
+var info = d3.select("body").append("div")	
+    .attr("id", "info")				
+    .style("opacity", 0);
+
+ }
+
+//draw(n22013)   
+
+
+// Menu
+var menu = d3.select("#menu").append("div")	
+
+ 
+function drawmenu(layer,label) {
+	menu.append("div").attr("class","menu-item").html(label)
+	.on("click", function() {
+	d3.select("#mylayer").remove();	
+	d3.select("#info").remove();
+	d3.selectAll(".menu-item").style("background", "#70A9DB")	;
+	d3.select(this).style("background","red");
+	draw(layer)
+	
+	console.log(label)
+	link = "database/geojson/nuts" + label.substring(8,12) + "-level" + label.substring(5,6) + ".geojson"
+	download.html("<br><a href='" + link  + "' download><img src='img/download.jpg' width='150px'></img></a>")
+	})
+	.on("mouseover",function(){
+	d3.select(this).style("opacity",0.6)	
+	})
+	.on("mouseout",function(){
+	d3.select(this).style("opacity",1)	
+	})
+
+} 
+
+drawmenu(n02006,"NUTS 0 (2006)")
+drawmenu(n12006,"NUTS 1 (2006)")
+drawmenu(n22006,"NUTS 2 (2006)")
+drawmenu(n32006, "NUTS 3 (2006)")
+drawmenu(n02010,"NUTS 0 (2010)")
+drawmenu(n12010,"NUTS 1 (2010)")
+drawmenu(n22010,"NUTS 2 (2010)")
+drawmenu(n32010, "NUTS 3 (2010)")
+drawmenu(n02013,"NUTS 0 (2013)")
+drawmenu(n12013,"NUTS 1 (2013)")
+drawmenu(n22013,"NUTS 2 (2013)")
+drawmenu(n32013, "NUTS 3 (2013)")
+var download = menu.append("div").attr("class","download")
+
+
+// logo
+
+var logo = d3.select("body").append("div").attr("id","logo")
+logo.html("<img src='img/riate.png' width='150px'></img>")
+
+
+// title
+
+var logo = d3.select("body").append("div").attr("id","title")
+logo.html("<h1>Fond généralisé<br>des régions européennes<br/>pour l’aménagement du territoire<br/>(GREAT)</h1>")
+
+
+}
+
+</script>    
+</body>
+</html>
