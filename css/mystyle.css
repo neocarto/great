@@ -40,6 +40,17 @@
    		text-shadow: 2px 2px 4px #153760;
 	}
 
+
+	#number { 
+		z-index:100;	 	
+		position: absolute;    
+		left: 20px;
+		bottom: 0px;
+		font-family:Impact;
+		color:  white;
+   		text-shadow: 2px 2px 4px #153760;
+	}
+
 	#menu {   
 		z-index: 2;
 	 	position: absolute;    

@@ -67,11 +67,17 @@ var transform = d3.geoTransform({point: projectPoint}),
 path = d3.geoPath().projection(transform);
 
 
+var number = d3.select("body").append("div").attr("id","number")
+
 
 
 function draw(layer) { 
 
-       var featureElement = svg
+
+	var n = layer.features.length;
+	
+	
+	var featureElement = svg
 	    .append("g")
 	    .attr("id","mylayer")
             .attr("class","nuts")
@@ -81,8 +87,8 @@ function draw(layer) {
             .append("path")
 	    .attr('style', 'pointer-events:visiblePainted;  cursor:pointer') 
        	    .attr("id", function(d) { return d.id; })
- 	.on('click',  function (d) {console.log(d.properties.name);})
-.on("mouseover", function(d) {		
+ 	    //.on('click',  function (d) {console.log(d.properties.name);})
+	    .on("mouseover", function(d) {		
             info.transition()		
                 .duration(200)		
                 .style("opacity", 0.8);		
@@ -100,6 +106,14 @@ function draw(layer) {
         map.on("move", update);
     
         update();
+	
+	
+// number
+
+number.html("<h2>"+n+" unités territoriales</h2>")
+
+
+	
 
         function update() {featureElement.attr("d", path);} 
 
@@ -125,8 +139,7 @@ function drawmenu(layer,label) {
 	d3.selectAll(".menu-item").style("background", "#70A9DB")	;
 	d3.select(this).style("background","red");
 	draw(layer)
-	
-	console.log(label)
+
 	link = "database/geojson/nuts" + label.substring(8,12) + "-level" + label.substring(5,6) + ".geojson"
 	download.html("<br><a href='" + link  + "' download><img src='img/download.jpg' width='150px'></img></a>")
 	})
@@ -164,6 +177,7 @@ logo.html("<img src='img/riate.png' width='150px'></img>")
 
 var logo = d3.select("body").append("div").attr("id","title")
 logo.html("<h1>Fond généralisé<br>des régions européennes<br/>pour l’aménagement du territoire<br/>(GREAT)</h1>")
+
 
 
 }
